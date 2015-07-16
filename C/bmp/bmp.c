@@ -52,7 +52,7 @@ void do_bitmap()
 			d = *src ^ xor;
 			unsigned char bit = 0;
 			/* Image2LCD generate bmp buffer array, 
-			 * Pixel sequence in BYTE:MSB...LSB
+			 * Pixel sequence in BYTE:MSB...LSB(eg,pix0...pix7)
 			 * Horization scan
 			 * SCAN from top to bottom and from left to right
 			 * 1BPP
