@@ -68,6 +68,249 @@ void videoram_set_pixel(int x, int y, int c, uint8_t *buf)
 	}
 }
 
+/* draw a vertical line */
+static int draw_vline(int x1, int y1, int x2, int y2, xxx_color_t line_color)
+{
+	int len = 0;
+	int i;
+	int ret = 0;
+	uint8_t* buf8 = NULL;
+
+	if (x1 >= DISPLAY_SIZE_X)
+	  return -1;
+
+	if (y1 >= DISPLAY_SIZE_Y || y2 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	if (x1 != x2)
+		return -1;
+
+	if (y1 > y2)
+		return -1;
+
+	len = y2 - y1 + 1;
+
+	buf8 = xxx_get_fb();
+
+	if (DISPLAY_BPP == 16)
+	{
+		uint16_t* buf16;
+		buf16 = (uint16_t*)buf8;
+
+		if (line_color.type != COLOR_TYPE_16BPP)
+		{
+			return -1;
+		}
+
+		for (i = 0; i < len; i++)
+		{
+			buf16[DISPLAY_SIZE_X * (y1 + i) + x1] = line_color.value;
+		}
+	} else if(DISPLAY_BPP == 1) {
+		for (i = y1; i <= y2; i++)
+		{
+			videoram_set_pixel(x1, i, line_color.value, buf8);
+		}
+
+	} 
+	
+
+	return ret;
+}
+
+/* draw a horizontal line */
+static int draw_hline(int x1, int y1, int x2, int y2, xxx_color_t line_color)
+{
+	int len = 0;
+	int ret = 0;
+	int i;
+	uint8_t* buf8 = NULL;
+
+	if (y1 >= DISPLAY_SIZE_Y )
+	  return -1;
+
+	if (x1 >= DISPLAY_SIZE_X || x2 >= DISPLAY_SIZE_X)
+	  return -1;
+
+	if (y1 != y2)
+		return -1;
+
+	if (x1 > x2)
+		return -1;
+
+	len = x2 - x1 + 1;
+
+	buf8 = get_fb();
+
+	if (DISPLAY_BPP == 16)
+	{
+		uint16_t* buf16;
+		buf16 = (uint16_t*)buf8;
+
+		if (line_color.type != COLOR_TYPE_16BPP)
+		{
+			return -1;
+		}
+
+		for (i = 0; i < len; i++)
+		{
+			*(buf16 + DISPLAY_SIZE_X * y1 + x1 + i) = line_color.value;
+		}
+	} else if(DISPLAY_BPP == 1){
+#if 1
+		for (i = x1; i <= x2; i++)
+		{
+			videoram_set_pixel(i, y1, line_color.value, buf8);
+		}
+#else
+		//have some REFRESH issue in this implementation method
+		int y = y1;
+		uint8_t index;
+		uint8_t d;
+
+		for (; x1 <= x2; x1++)
+		{
+			d = videoram_get_pixel(x1, y, buf8, &index);
+			if (index & 1)
+			{
+				*(buf8 + LCD_BPP1_BYTESPERLINE * y + (x1 >> 3)) |= d;
+			}
+			else {
+				*(buf8 + LCD_BPP1_BYTESPERLINE * y + (x1 >> 3)) &= ~d;
+			}
+		}
+#endif
+	}	
+
+	return ret;
+}
+
+int draw_pixel(int x, int y, xxx_color_t line_color)
+{
+	uint8_t* buf8 = NULL;
+	int ret = 0;
+
+	buf8 = get_fb();
+
+	if (x < 0 || x >= DISPLAY_SIZE_X || y < 0 || y >= DISPLAY_SIZE_Y)
+		return -1;
+
+	if (DISPLAY_BPP == 16)
+	{
+		uint16_t* buf16;
+		buf16 = (uint16_t*)buf8;
+
+		if (line_color.type != COLOR_TYPE_16BPP)
+		{
+			return -1;
+		}
+
+		*(buf16 + DISPLAY_SIZE_X * y + x) = line_color.value;
+	} else if (DISPLAY_BPP == 1){
+		videoram_set_pixel(x, y, line_color.value, buf8);
+	}
+
+	return ret;
+}
+
+int draw_line(int x1, int y1, int x2, int y2, xxx_color_t line_color)
+{
+	int ret;
+
+	ret = 0;
+
+	if (x1 >= DISPLAY_SIZE_X || y1 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	if (x2 >= DISPLAY_SIZE_X || y2 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	if (x1 != x2 && y1!= y2)
+		return -1;
+
+	if (x1 == x2)
+	{
+		draw_vline(x1, y1, x2, y2, line_color);
+	} else if (y1 == y2) {
+		draw_hline(x1, y1, x2, y2, line_color);
+	}
+
+	return ret;
+}
+
+int draw_rect(int x1, int y1, int x2, int y2, xxx_color_t line_color)
+{
+	int ret;
+
+	ret = 0;
+
+	if (x1 == x2 && y1 == y2)
+		return -1;
+
+	if (x1 >= DISPLAY_SIZE_X || x2 >= DISPLAY_SIZE_X)
+	  return -1;
+
+	if (y1 >= DISPLAY_SIZE_Y || y2 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	draw_hline(x1, y1, x2, y1, line_color);
+	draw_vline(x2, y1, x2, y2, line_color);
+	draw_hline(x1, y2, x2, y2, line_color);
+	draw_vline(x1, y1, x1, y2, line_color);
+
+	return ret;
+}
+
+int fill_rect(int x1, int y1, int x2, int y2, xxx_color_t line_color)
+{
+	int x, y;
+	int ret = 0;
+	uint8_t* buf8 = NULL;
+
+	if (x1 > x2)
+		return -1;
+
+	if (y1 > y2)
+		return -1;
+
+	if (x1 >= DISPLAY_SIZE_X || y1 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	if (x2 >= DISPLAY_SIZE_X || y2 >= DISPLAY_SIZE_Y)
+	  return -1;
+
+	buf8 = get_fb();
+
+	if (DISPLAY_BPP == 16)
+	{
+		uint16_t* buf16;
+		buf16 = (uint16_t*)buf8;
+
+		if (line_color.type != COLOR_TYPE_16BPP)
+		{
+			return -1;
+		}
+
+		for (y = y1; y <= y2; y++)
+		{
+			for (x = x1; x <= x2; x++)
+			{
+				*(buf16 + DISPLAY_SIZE_X * y + x) = line_color.value;
+			}
+		}
+	} else if (DISPLAY_BPP == 1) {
+		for (y = y1; y <= y2; y++)
+		{
+			for (x = x1; x <= x2; x++)
+			{
+				videoram_set_pixel(x, y, line_color.value, buf8);
+			}
+		}
+	}
+
+	return ret;
+}
+
 /* bmp buffer read through fread */
 void show_bitmap()
 {
@@ -103,7 +346,7 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 	if (width + x < 0 || height + y < 0 || x >= DISPLAY_SIZE_X || y >= DISPLAY_SIZE_Y)
 		return -1;
 
-	buf8 = atp_get_fb();
+	buf8 = get_fb();
 
 	if (DISPLAY_BPP == 16)
 	{
