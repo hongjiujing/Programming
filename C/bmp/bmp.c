@@ -35,6 +35,11 @@ uint8_t bitmap_get_pixel(int x, int y, uint8_t *bmp, int bmp_width)
 	uint8_t	 xor;
 	uint8_t bmp_line_len;
 
+	/* NOTICE: If bmp file edited by Windows Photoshop or other tools,
+	 * Image2LCD need to use "Reverse color"
+	 * Because Windows use "1=Black, 0=White"
+	 */
+
 #ifdef MONO10
 	xor = 0x0;
 #else
