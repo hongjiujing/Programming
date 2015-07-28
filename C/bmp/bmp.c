@@ -345,7 +345,7 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 	if (width + x < 0 || height + y < 0 || x >= DISPLAY_SIZE_X || y >= DISPLAY_SIZE_Y)
 		return -1;
 
-	buf8 = get_fb();
+	buf8 = atp_get_fb();
 
 	if (DISPLAY_BPP == 16)
 	{
@@ -369,7 +369,11 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 		 * horization scan
 		 * scan from top to bottom and from left to right
 		 */
-#if 0
+#if 1	
+		/* This implementation have no REFRESH issue,but have below limit
+		 * 1) bmp's width and height is 8 alignment
+		 * 2) position (x,y) is 8 alignment
+		 */
 		uint8_t k;
 		for (j = y; j < y + height; j++)
 		{
@@ -386,6 +390,8 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 			}
 		}
 #else
+		/* This implementation have REFRESH issue which try to fix above 8 alignment limit
+		 */
 		uint8_t data;
 		for (j = y; j < y + height; j++)
 		{
@@ -400,6 +406,7 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 
 	return ret;
 }
+
 
 
 /* Patch for Qemu FB driver */
