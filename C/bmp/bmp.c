@@ -7,7 +7,7 @@ uint8_t fp[160 * 160 / 8];
 
 uint8_t videoram_get_pixel(int x, int y, uint8_t *buf, uint8_t *index)
 {
-#define COLORS	2 /* BLACK && WHITE */
+	#define COLORS	2 /* BLACK && WHITE */
 	uint8_t data;
 	uint8_t byte;
 	unsigned int off;
@@ -111,7 +111,6 @@ static int draw_vline(int x1, int y1, int x2, int y2, xxx_color_t line_color)
 		{
 			videoram_set_pixel(x1, i, line_color.value, buf8);
 		}
-
 	} 
 	
 
@@ -407,9 +406,12 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 /* in xxx_fb_update_display */
 static void xxx_fb_update_display(void *opaque)
 {
-	... /* some code to get Qemu surface paramer */
-			/* such as dst_line, pitch, width, height,and use Qemu api (translate guest os virtual memory addr to host virtual memory addr) to get GuestOS video ram ptr */
-
+	... 
+	/* some code to get Qemu surface paramer */
+	/* such as dst_line, pitch, width, height,
+	 * and use Qemu api 
+	 * (translate guest os virtual memory addr to host virtual memory addr) 
+	 * to get GuestOS video ram ptr */
 	/* Patch for support 1BPP emulation */
 #ifdef FB_1BPP
 #define GUEST_OS_DISPLAY_XRES	160
