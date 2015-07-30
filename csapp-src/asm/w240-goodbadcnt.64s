@@ -1,0 +1,196 @@
+	.file	"w240-goodbadcnt.c"
+	.text
+	.globl	thread
+	.type	thread, @function
+thread:
+	pushq	%rbp
+	pushq	%rbx
+	subq	$8, %rsp
+	movq	(%rdi), %rbp
+	movl	$0, %ebx
+	jmp	.L2
+.L3:
+	movl	$cnt, %edi
+	call	*incr_fun(%rip)
+	addq	$1, %rbx
+.L2:
+	cmpq	%rbp, %rbx
+	jl	.L3
+	movl	$0, %eax
+	addq	$8, %rsp
+	popq	%rbx
+	popq	%rbp
+	ret
+	.size	thread, .-thread
+	.globl	bad_incr
+	.type	bad_incr, @function
+bad_incr:
+	addq	$1, (%rdi)
+	ret
+	.size	bad_incr, .-bad_incr
+	.globl	lock_incr
+	.type	lock_incr, @function
+lock_incr:
+#APP
+# 84 "w240-goodbadcnt.c" 1
+	lock            # Insert lock prefix
+	addq $1, (%rdi) # Increment *ptr
+# 0 "" 2
+#NO_APP
+	ret
+	.size	lock_incr, .-lock_incr
+	.globl	mutex_incr
+	.type	mutex_incr, @function
+mutex_incr:
+	pushq	%rbx
+	movq	%rdi, %rbx
+	movl	$mutex, %edi
+	call	pthread_mutex_lock
+	addq	$1, (%rbx)
+	movl	$mutex, %edi
+	call	pthread_mutex_unlock
+	popq	%rbx
+	ret
+	.size	mutex_incr, .-mutex_incr
+	.globl	sem_incr
+	.type	sem_incr, @function
+sem_incr:
+	pushq	%rbx
+	movq	%rdi, %rbx
+	movl	$sem, %edi
+	call	P
+	addq	$1, (%rbx)
+	movl	$sem, %edi
+	call	V
+	popq	%rbx
+	ret
+	.size	sem_incr, .-sem_incr
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC0:
+	.string	"usage: %s <niters> <incrfun>\n"
+	.section	.rodata.str1.8,"aMS",@progbits,1
+	.align 8
+.LC1:
+	.string	"incrfun must be between 0 and %d\n"
+	.section	.rodata.str1.1
+.LC2:
+	.string	"BOOM! cnt=%ld\n"
+.LC3:
+	.string	"OK cnt=%ld\n"
+	.text
+	.globl	main
+	.type	main, @function
+main:
+	pushq	%rbp
+	pushq	%rbx
+	subq	$40, %rsp
+	movl	%edi, %ebx
+	movq	%rsi, %rbp
+	leal	-2(%rdi), %eax
+	cmpl	$1, %eax
+	jbe	.L12
+	movq	(%rsi), %rdx
+	movl	$.LC0, %esi
+	movl	$1, %edi
+	movl	$0, %eax
+	call	__printf_chk
+	movl	$0, %edi
+	call	exit
+.L12:
+	movq	8(%rsi), %rdi
+	movl	$10, %edx
+	movl	$0, %esi
+	call	strtol
+	cltq
+	movq	%rax, 8(%rsp)
+	cmpl	$3, %ebx
+	jne	.L13
+	movq	16(%rbp), %rdi
+	movl	$10, %edx
+	movl	$0, %esi
+	call	strtol
+	cmpl	$3, %eax
+	jbe	.L14
+	movl	$4, %edx
+	movl	$.LC1, %esi
+	movl	$1, %edi
+	movl	$0, %eax
+	call	__printf_chk
+	movl	$0, %edi
+	call	exit
+.L14:
+	cltq
+	movq	incrs(,%rax,8), %rax
+	movq	%rax, incr_fun(%rip)
+.L13:
+	movl	$1, %edx
+	movl	$0, %esi
+	movl	$sem, %edi
+	call	Sem_init
+	movl	$0, %esi
+	movl	$mutex, %edi
+	call	pthread_mutex_init
+	leaq	8(%rsp), %rcx
+	movl	$thread, %edx
+	movl	$0, %esi
+	leaq	16(%rsp), %rdi
+	call	Pthread_create
+	leaq	8(%rsp), %rcx
+	movl	$thread, %edx
+	movl	$0, %esi
+	leaq	24(%rsp), %rdi
+	call	Pthread_create
+	movl	$0, %esi
+	movq	16(%rsp), %rdi
+	call	Pthread_join
+	movl	$0, %esi
+	movq	24(%rsp), %rdi
+	call	Pthread_join
+	movq	8(%rsp), %rax
+	addq	%rax, %rax
+	movq	cnt(%rip), %rdx
+	cmpq	%rdx, %rax
+	je	.L15
+	movq	cnt(%rip), %rdx
+	movl	$.LC2, %esi
+	movl	$1, %edi
+	movl	$0, %eax
+	call	__printf_chk
+	jmp	.L16
+.L15:
+	movq	cnt(%rip), %rdx
+	movl	$.LC3, %esi
+	movl	$1, %edi
+	movl	$0, %eax
+	call	__printf_chk
+.L16:
+	movl	$0, %edi
+	call	exit
+	.size	main, .-main
+	.comm	mutex,40,32
+	.comm	sem,32,32
+	.globl	cnt
+	.bss
+	.align 8
+	.type	cnt, @object
+	.size	cnt, 8
+cnt:
+	.zero	8
+	.globl	incr_fun
+	.data
+	.align 8
+	.type	incr_fun, @object
+	.size	incr_fun, 8
+incr_fun:
+	.quad	bad_incr
+	.globl	incrs
+	.align 32
+	.type	incrs, @object
+	.size	incrs, 32
+incrs:
+	.quad	bad_incr
+	.quad	lock_incr
+	.quad	mutex_incr
+	.quad	sem_incr
+	.ident	"GCC: (Ubuntu 4.8.1-2ubuntu1~12.04) 4.8.1"
+	.section	.note.GNU-stack,"",@progbits

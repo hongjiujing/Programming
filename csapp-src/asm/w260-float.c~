@@ -1,0 +1,5 @@
+/* Experiments with floating point code */
+
+double mult(double x, double y) {
+    return x * y;
+}

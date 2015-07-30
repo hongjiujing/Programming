@@ -1,0 +1,43 @@
+	.file	"w260-float.c"
+	.text
+	.globl	mult
+	.type	mult, @function
+mult:
+	vmulsd	%xmm1, %xmm0, %xmm0
+	ret
+	.size	mult, .-mult
+	.globl	amult
+	.type	amult, @function
+amult:
+#APP
+# 20 "w260-float.c" 1
+	vmulsd %xmm0, %xmm1, %xmm0   # Compute r = x * y
+	
+# 0 "" 2
+#NO_APP
+	ret
+	.size	amult, .-amult
+	.globl	dmin
+	.type	dmin, @function
+dmin:
+#APP
+# 31 "w260-float.c" 1
+	vminsd %xmm0, %xmm1, %xmm0   # Compute r = min(x,y)
+	
+# 0 "" 2
+#NO_APP
+	ret
+	.size	dmin, .-dmin
+	.globl	dsqrt
+	.type	dsqrt, @function
+dsqrt:
+#APP
+# 43 "w260-float.c" 1
+	sqrtsd %xmm0, %xmm0   # Compute r = sqrt(x)
+	
+# 0 "" 2
+#NO_APP
+	ret
+	.size	dsqrt, .-dsqrt
+	.ident	"GCC: (Ubuntu 4.8.1-2ubuntu1~12.04) 4.8.1"
+	.section	.note.GNU-stack,"",@progbits

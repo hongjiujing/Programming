@@ -1,0 +1,27 @@
+/* Example of stack frame */
+#include <stdio.h>
+
+/* Example of function requiring a stack frame */
+/* $begin 330-frame-c */
+long int vframe(long int n, long int idx, long int *q)  {
+    long int i;
+    long int *p[n];
+    p[0] = &i;
+    for (i = 1; i < n; i++)
+	p[i] = q;
+    return *p[idx];
+}
+/* $end 330-frame-c */
+
+long int lframe(long int n, long int idx)  {
+    long int i;
+    int a[n];
+    a[0] = 7;
+    for (i = 1; i < n; i++)
+	a[i] = 3;
+    return a[idx];
+}
+
+int main() {
+    return 0;
+}

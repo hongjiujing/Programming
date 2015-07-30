@@ -1,0 +1,44 @@
+/* Functions to demonstrate IA32 procedure handling */
+
+int div1(int a, int b) {
+    return a / b;
+}
+
+int fun(int a, int *bp) {
+    return a + *bp;
+}
+
+
+int call_fun(int x, int y) {
+    return fun(x, &y);
+}
+
+int afun(int t) {
+    int a[2] = {33, 515};
+    return a[t];
+}
+
+int vfun(int t, int n) {
+    int a[n];
+    int i;
+    for (i = 0; i < n; i++)
+	a[i] = i;
+    return a[t];
+}
+
+int switch_eg(int x, int y) {
+    switch(x) {
+    case 1:
+	return y + 3;
+    case 3:
+	return y*y;
+    case 4:
+	return -y;
+    case 5:
+    case 7:
+	return 15;
+    default:
+	return x;
+	
+    }
+}

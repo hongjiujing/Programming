@@ -1,0 +1,71 @@
+	.file	"w250-umult-full.c"
+	.text
+	.globl	umult_full
+	.type	umult_full, @function
+umult_full:
+	movq	%rdx, %rcx
+#APP
+# 14 "w250-umult-full.c" 1
+	movq %rdi,%rax      # Get x
+	mulq %rsi            # Unsigned multiply by y
+	movq %rax,(%rcx)     # Store low-order  8 bytes
+	movq %rdx,8(%rcx)     # Store high-order 8 bytes
+# 0 "" 2
+#NO_APP
+	ret
+	.size	umult_full, .-umult_full
+	.section	.rodata.str1.8,"aMS",@progbits,1
+	.align 8
+.LC0:
+	.string	"Full multiply 0x%lx X 0x%lx\n  --> 0x%.16lx%.16lx\n"
+	.text
+	.globl	main
+	.type	main, @function
+main:
+	pushq	%r13
+	pushq	%r12
+	pushq	%rbp
+	pushq	%rbx
+	subq	$24, %rsp
+	movl	%edi, %r12d
+	movq	%rsi, %r13
+	movl	$65536, %ebx
+	cmpl	$1, %edi
+	jle	.L3
+	movq	8(%rsi), %rdi
+	movl	$0, %edx
+	movl	$0, %esi
+	call	strtoul
+	movq	%rax, %rbx
+.L3:
+	movl	$65535, %ebp
+	cmpl	$2, %r12d
+	jle	.L4
+	movq	16(%r13), %rdi
+	movl	$0, %edx
+	movl	$0, %esi
+	call	strtoul
+	movq	%rax, %rbp
+.L4:
+	movq	%rsp, %rdx
+	movq	%rbp, %rsi
+	movq	%rbx, %rdi
+	call	umult_full
+	movq	(%rsp), %r9
+	movq	8(%rsp), %r8
+	movq	%rbp, %rcx
+	movq	%rbx, %rdx
+	movl	$.LC0, %esi
+	movl	$1, %edi
+	movl	$0, %eax
+	call	__printf_chk
+	movl	$0, %eax
+	addq	$24, %rsp
+	popq	%rbx
+	popq	%rbp
+	popq	%r12
+	popq	%r13
+	ret
+	.size	main, .-main
+	.ident	"GCC: (Ubuntu 4.8.1-2ubuntu1~12.04) 4.8.1"
+	.section	.note.GNU-stack,"",@progbits
