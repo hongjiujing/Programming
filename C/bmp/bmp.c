@@ -434,10 +434,9 @@ static void xxx_fb_update_display(void *opaque)
 #ifdef FB_1BPP
 /* Because Qemu dont't support 1BPP, so need to create 
  * a buffer(fbs_extend) to extend GuestOS framebuffer to Qemu 16BPP framebuffer.
- * if don't extend or just extend fbs.dst_pixels,will generate framebuffer corruption,
- * because GuestOS && Qemu Framebuffer driver use share memory.
- * If need 16BPP,dont need extend.
- * because both GuestOS and Qemu use 16BPP memory 
+ * if don't extend or just extend fbs.dst_pixels,will generate framebuffer corruption with skin support
+ * because if need skin,skin fn process path will generate timing issue between SDL draw and Qemu    
+ * framebuffer driver  
  */
 #define GUEST_OS_DISPLAY_XRES	160
 #define GUEST_OS_DISPLAY_YRES	160
