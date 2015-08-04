@@ -415,6 +415,9 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 
 
 /* Patch for Qemu FB driver */
+#ifdef FB_1BPP
+unsigned short fbs_extend[160 * 160];
+#endif
 /* in xxx_fb_update_display */
 static void xxx_fb_update_display(void *opaque)
 {
@@ -425,14 +428,24 @@ static void xxx_fb_update_display(void *opaque)
 	 * (translate guest os virtual memory addr to host virtual memory addr) 
 	 * to get GuestOS video ram ptr */
 	/* Patch for support 1BPP emulation */
+	uint64_t shared_addr = (uint64_t)ivshmem_get_addr();
+	src_line  = (unsigned char*)(shared_addr + base);
+
 #ifdef FB_1BPP
+/* Because Qemu dont't support 1BPP, so need to create 
+ * a buffer(fbs_extend) to extend GuestOS framebuffer to Qemu 16BPP framebuffer.
+ * if don't extend or just extend fbs.dst_pixels,will generate framebuffer corruption,
+ * because GuestOS && Qemu Framebuffer driver use share memory.
+ * If need 16BPP,dont need extend.
+ * because both GuestOS and Qemu use 16BPP memory 
+ */
 #define GUEST_OS_DISPLAY_XRES	160
 #define GUEST_OS_DISPLAY_YRES	160
 	/* in guest os, use 1BPP to save memory */
 #define HW_FBMEM_SIZE	 160 * 160 / 8
 	int  i;
-	const uint8_t* src = fbs.src_pixels;
-	uint16_t*	dst = fbs.dst_pixels;
+	const uint8_t* src = src_line;
+	uint16_t*	dst = fbs_extend;
 
 	int k;
 	unsigned char byte;
@@ -458,6 +471,14 @@ static void xxx_fb_update_display(void *opaque)
 		src++;
 	}
 #endif
+
+#ifdef FB_1BPP
+	fbs.src_pixels = (unsigned char *)fbs_extend;
+#else
+	fbs.src_pixels = src_line;
+#endif
+	
+	...
 	
 	dpy_update(surface->ds, rect.xmin, rect.ymin, rect.xmax-rect.xmin, rect.ymax-rect.ymin);
 }
