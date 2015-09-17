@@ -400,7 +400,7 @@ int draw_bitmap(uint8_t* bitmap, int x, int y, int width, int height)
 		uint8_t data;
 		for (j = y; j < y + height; j++)
 		{
-			for (i = x; i < x + width; i++)
+			for (i = x; i <= x + width; i++)
 			{
 				data = bitmap_get_pixel(i - x, j - y, bitmap, width);
 				videoram_set_pixel(i, j, data, buf8);
